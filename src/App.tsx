@@ -62,6 +62,7 @@ type SectionVariant =
   | "flow"
   | "fork-worktree"
   | "overview"
+  | "agent-apps"
   | "checklist";
 
 type Section = {
@@ -75,7 +76,16 @@ type Section = {
   items?: string[];
   links?: LinkItem[];
   directory?: DirectoryItem[];
+  agentApps?: AgentApp[];
   promptTemplate?: string;
+};
+
+type AgentApp = {
+  name: string;
+  logo: string;
+  category: string;
+  text: string;
+  tone: string;
 };
 
 const directoryItems: DirectoryItem[] = [
@@ -114,6 +124,51 @@ const directoryItems: DirectoryItem[] = [
     text: "Fork / Worktree 与总结",
     href: "#fork-worktree",
     icon: "shield",
+  },
+];
+
+const agentApps: AgentApp[] = [
+  {
+    name: "Codex",
+    logo: "Cx",
+    category: "工程执行",
+    text: "面向代码修改、调试、构建验证与仓库协作。",
+    tone: "codex",
+  },
+  {
+    name: "Antigravity",
+    logo: "Ag",
+    category: "多 Agent 开发",
+    text: "面向多个本地代理的启动、监控与协同编排。",
+    tone: "antigravity",
+  },
+  {
+    name: "Claude Code",
+    logo: "Cc",
+    category: "终端编程",
+    text: "在命令行中理解代码库、执行修改并沉淀工作流。",
+    tone: "claude",
+  },
+  {
+    name: "WorkBuddy",
+    logo: "Wb",
+    category: "办公智能体",
+    text: "面向文档、数据、设计、运营等场景的多专家协作。",
+    tone: "workbuddy",
+  },
+  {
+    name: "Cursor",
+    logo: "Cu",
+    category: "AI IDE",
+    text: "把补全、对话、代码库理解与代理任务放进编辑器。",
+    tone: "cursor",
+  },
+  {
+    name: "Devin",
+    logo: "Dv",
+    category: "云端工程代理",
+    text: "面向复杂工程任务的云端计划、实现、测试与协作。",
+    tone: "devin",
   },
 ];
 
@@ -348,12 +403,12 @@ const sections: Section[] = [
     cards: [
       {
         title: "Fork",
-        text: "复制远程项目。",
+        text: "复制当前会话，开启新线程并行探索。",
         icon: "git",
       },
       {
         title: "Worktree",
-        text: "独立工作现场。",
+        text: "隔离改动，在线程专属 worktree 中执行。",
         icon: "branch",
       },
       {
@@ -406,6 +461,14 @@ const sections: Section[] = [
         icon: "shield",
       },
     ],
+  },
+  {
+    id: "agent-apps",
+    navLabel: "应用生态",
+    title: "热门 AI Agent 应用",
+    lead: "从编程、办公到云端执行，Agent 正在变成新的工作入口。",
+    variant: "agent-apps",
+    agentApps,
   },
 ];
 
@@ -533,6 +596,27 @@ function renderLinks(links: LinkItem[] = []) {
           </div>
           <p>{link.text}</p>
         </a>
+      ))}
+    </div>
+  );
+}
+
+function renderAgentApps(apps: AgentApp[] = []) {
+  return (
+    <div className="agent-app-grid" aria-label="热门 AI Agent 应用列表">
+      {apps.map((app) => (
+        <article className={`agent-app-card ${app.tone}`} key={app.name}>
+          <div className="agent-logo" aria-hidden="true">
+            <span>{app.logo}</span>
+          </div>
+          <div className="agent-app-copy">
+            <div>
+              <p className="agent-category">{app.category}</p>
+              <h3>{app.name}</h3>
+            </div>
+            <p>{app.text}</p>
+          </div>
+        </article>
       ))}
     </div>
   );
@@ -669,6 +753,10 @@ function renderSectionContent(section: Section) {
     );
   }
 
+  if (section.variant === "agent-apps") {
+    return renderAgentApps(section.agentApps);
+  }
+
   return <div className="feature-grid">{section.cards?.map(renderCard)}</div>;
 }
 
@@ -704,7 +792,7 @@ function App() {
 
   useEffect(() => {
     const revealTargets = document.querySelectorAll<HTMLElement>(
-      ".hero-content, .cover-meta, .section-heading, .feature-card, .compare-card, .point-card, .rule-card, .link-grid a, .directory-grid a, .flow-line article, .command-grid code, .section-visual, .file-image-card, .prompt-template, .tag-row span",
+      ".hero-content, .cover-meta, .section-heading, .feature-card, .compare-card, .point-card, .rule-card, .agent-app-card, .link-grid a, .directory-grid a, .flow-line article, .command-grid code, .section-visual, .file-image-card, .prompt-template, .tag-row span",
     );
 
     revealTargets.forEach((target, index) => {
@@ -717,13 +805,19 @@ function App() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-          } else {
+            return;
+          }
+
+          const rect = entry.boundingClientRect;
+          const outsideBufferedViewport = rect.bottom < -180 || rect.top > window.innerHeight + 180;
+
+          if (outsideBufferedViewport) {
             entry.target.classList.remove("is-visible");
           }
         });
       },
       {
-        rootMargin: "0px 0px -8% 0px",
+        rootMargin: "140px 0px 140px 0px",
         threshold: 0.12,
       },
     );
